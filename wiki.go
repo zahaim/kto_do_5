@@ -68,7 +68,7 @@ func makeHandler(fn func(http.ResponseWriter, *http.Request, string)) http.Handl
   }
 }
 
-var templates = template.Must(template.ParseFiles("edit.html", "view.html"))
+var templates = template.Must(template.ParseFiles("edit.html", "view.html", "chooseDate.html"))
 
 func renderTemplate(w http.ResponseWriter, tmpl string, p *Page) {
   err := templates.ExecuteTemplate(w, tmpl+".html", p)
@@ -78,14 +78,21 @@ func renderTemplate(w http.ResponseWriter, tmpl string, p *Page) {
   }
 }
 
-//func sayHello(w http.ResponseWriter, r *http.Request) {
-//  fmt.Fprintf(w, "Hi there, I love you %s!", r.URL.Path[:])
-//}
+func chooseDate(w http.ResponseWriter, req *http.Request) {
+	t, err := template.ParseFiles("chooseDate.html")
+  if err != nil {
+    http.Error(w, err.Error(), http.StatusInternalServerError)
+  }
+  err = t.Execute(w, "")
+  if err != nil {
+    http.Error(w, err.Error(), http.StatusInternalServerError)
+  }
+}
 
 func main() {
   http.HandleFunc("/view/", makeHandler(viewHandler))
   http.HandleFunc("/edit/", makeHandler(editHandler))
   http.HandleFunc("/save/", makeHandler(saveHandler))
-//  http.HandleFunc("/", sayHello)
+  http.HandleFunc("/", chooseDate)
   http.ListenAndServe(":8080", nil)
 }
