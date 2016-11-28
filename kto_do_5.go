@@ -1,32 +1,98 @@
 package main
 
 import (
-	"fmt"
-	"html/template"
-	"log"
-	"net/http"
+//    "fmt"
+    "html/template"
+    "io/ioutil"
+    "net/http"
+    "regexp"
 )
 
-func Home(w http.ResponseWriter, req *http.Request) {
-	render(w, "index.html")
+type Page struct {
+    Title string
+    Body  []byte
 }
 
-func render(w http.ResponseWriter, tmpl string) {
-	tmpl = fmt.Sprintf("%s", tmpl)
-	t, err := template.ParseFiles(tmpl)
-	if err != nil {
-		log.Print("template parsing error: ", err)
-	}
-	err = t.Execute(w, "")
-	if err != nil {
-		log.Print("template executing error: ", err)
-	}
+func (p *Page) save() error {
+    filename := p.Title + ".txt"
+    return ioutil.WriteFile(filename, p.Body, 0600)
+}
+
+func loadPage(title string) (*Page, error) {
+    filename := title + ".txt"
+    body, err := ioutil.ReadFile(filename)
+    if err != nil {
+      return nil, err
+    }
+    return &Page{Title: title, Body: body}, nil
+}
+
+func viewHandler(w http.ResponseWriter, r *http.Request, title string) {
+  p, err := loadPage(title)
+  if err != nil {
+    http.Redirect(w, r, "/edit/"+title, http.StatusFound)
+    return
+  }
+  renderTemplate(w, "view", p)
+}
+
+func editHandler(w http.ResponseWriter, r *http.Request, title string) {
+  p, err := loadPage(title)
+  if err != nil {
+      p = &Page{Title: title}
+  }
+  renderTemplate(w, "edit", p)
+}
+
+func saveHandler(w http.ResponseWriter, r *http.Request, title string) {
+  body := r.FormValue("body")
+  p := &Page{Title: title, Body: []byte(body)}
+  err := p.save()
+  if err != nil {
+    http.Error(w, err.Error(), http.StatusInternalServerError)
+    return
+  }
+  http.Redirect(w, r, "/view/"+title, http.StatusFound)
+}
+
+var validPath = regexp.MustCompile("^/(edit|save|view)/([a-zA-Z0-9]+)$")
+
+func makeHandler(fn func(http.ResponseWriter, *http.Request, string)) http.HandlerFunc {
+  return func(w http.ResponseWriter, r *http.Request) {
+      m := validPath.FindStringSubmatch(r.URL.Path)
+      if m == nil {
+          http.NotFound(w, r)
+          return
+      }
+      fn(w, r, m[2])
+  }
+}
+
+var templates = template.Must(template.ParseFiles("edit.html", "view.html", "chooseDate.html"))
+
+func renderTemplate(w http.ResponseWriter, tmpl string, p *Page) {
+  err := templates.ExecuteTemplate(w, tmpl+".html", p)
+  if err != nil {
+    http.Error(w, err.Error(), http.StatusInternalServerError)
+    return
+  }
+}
+
+func chooseDate(w http.ResponseWriter, req *http.Request) {
+	t, err := template.ParseFiles("chooseDate.html")
+  if err != nil {
+    http.Error(w, err.Error(), http.StatusInternalServerError)
+  }
+  err = t.Execute(w, "")
+  if err != nil {
+    http.Error(w, err.Error(), http.StatusInternalServerError)
+  }
 }
 
 func main() {
-	http.HandleFunc("/", Home)
-	err := http.ListenAndServe(":8080", nil)
-	if err != nil {
-		log.Fatal("ListenAndServe: ", err)
-	}
+  http.HandleFunc("/view/", makeHandler(viewHandler))
+  http.HandleFunc("/edit/", makeHandler(editHandler))
+  http.HandleFunc("/save/", makeHandler(saveHandler))
+  http.HandleFunc("/", chooseDate)
+  http.ListenAndServe(":8080", nil)
 }
