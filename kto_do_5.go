@@ -2,6 +2,7 @@ package main
 
 import (
 //    "fmt"
+    "time"
     "html/template"
     "io/ioutil"
     "net/http"
@@ -68,7 +69,7 @@ func makeHandler(fn func(http.ResponseWriter, *http.Request, string)) http.Handl
   }
 }
 
-var templates = template.Must(template.ParseFiles("edit.html", "view.html", "chooseDate.html"))
+var templates = template.Must(template.ParseFiles("edit.html", "view.html"))
 
 func renderTemplate(w http.ResponseWriter, tmpl string, p *Page) {
   err := templates.ExecuteTemplate(w, tmpl+".html", p)
@@ -78,21 +79,16 @@ func renderTemplate(w http.ResponseWriter, tmpl string, p *Page) {
   }
 }
 
-func chooseDate(w http.ResponseWriter, req *http.Request) {
-	t, err := template.ParseFiles("chooseDate.html")
-  if err != nil {
-    http.Error(w, err.Error(), http.StatusInternalServerError)
-  }
-  err = t.Execute(w, "")
-  if err != nil {
-    http.Error(w, err.Error(), http.StatusInternalServerError)
-  }
+func redirect(w http.ResponseWriter, r *http.Request) {
+  m := time.Now().Month().String()
+  http.Redirect(w, r, "/edit/"+m, http.StatusFound)
+  return
 }
 
 func main() {
   http.HandleFunc("/view/", makeHandler(viewHandler))
   http.HandleFunc("/edit/", makeHandler(editHandler))
   http.HandleFunc("/save/", makeHandler(saveHandler))
-  http.HandleFunc("/", chooseDate)
+  http.HandleFunc("/", redirect)
   http.ListenAndServe(":8080", nil)
 }
