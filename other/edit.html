@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Kto do 5?</title>
+  </head>
+  <body>
+    <h1>Who to 5 in {{.Title}}?</h1>
+
+    <form action="/save/{{.Title}}" method="POST">
+    <table>
+      <tr>
+        <th>who?</th>
+        <th>Mo</th>
+        <th>Tue</th>
+        <th>Wed</th>
+        <th>Thu</th>
+        <th>Fri</th>
+      </tr>
+      <tr>
+        <td>Jacek</td>
+        <td><input type="checkbox" checked=""></td>
+        <td><input type="checkbox"></td>
+        <td><input type="checkbox"></td>
+        <td><input type="checkbox"></td>
+        <td>{{range $index, $element := .}}{{$index}}
+{{range $element}}{{.Value}}
+{{end}}
+{{end}}
+        </td>
+      </tr>
+    </table>
+    <div><input type="submit" value="Save"></div>
+    </form>
+
+  </body>
+</html>
