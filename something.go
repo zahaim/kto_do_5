@@ -26,7 +26,7 @@ func (ul UserList) ChangeThick(who, when int, what bool) {
 
 func main() {
   //days := [5]bool{false,false,false,false,false}
-  names := []string{"Ala","Jacek"}
+  names := []string{"Ala","Jacek", "Janusz"}
   fmt.Println("Names print:", names)
 
   users := UserList{}
@@ -39,4 +39,5 @@ func main() {
   users.ChangeThick(1,2,true)
   users.ChangeThick(1,4,true)
   fmt.Printf("Array of %s is %b\n", users[1].name, users[1].days)
+  fmt.Println("Array of Users processed:", users)
 }

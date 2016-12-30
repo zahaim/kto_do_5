@@ -21,7 +21,7 @@
         <tr>
           <td>{{.Name}}</td>
             {{ range .Value}}
-              <td>{{if eq . true}}<input type="checkbox" checked>{{else}}<input type="checkbox">{{end}}<br></td>
+              <td>{{if eq . true}}<input type="checkbox" name="value" checked>{{else}}<input type="checkbox" name="value">{{end}}<br></td>
             {{end}}
         </tr>
       {{end}}
